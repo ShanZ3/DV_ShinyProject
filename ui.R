@@ -1,24 +1,14 @@
 library(shiny)
 library(shinydashboard)
 library(rsconnect)
-library(ggplot2)
-library(googleVis)
-library(tidyverse)
-library(DT)
-library(leaflet)
-library(maps)
-library(geojsonio)
-library(RColorBrewer)
-library(stats)
-library(shinyWidgets)
 
 # loading dfs
-location = read.csv("data/location.csv", stringsAsFactors = F)
-province = geojsonio::geojson_read("data/china.json",what='sp')
-date = read.csv("data/date.csv", stringsAsFactors = F)
-product_category = read.csv("data/category.csv", stringsAsFactors = F)
-category_date = read.csv("data/category_date.csv", stringsAsFactors = F)
-merge = read.csv("data/merge.csv", stringsAsFactors = F)
+location = read.csv("location.csv", stringsAsFactors = F)
+province = geojsonio::geojson_read("china.json",what='sp')
+date = read.csv("date.csv", stringsAsFactors = F)
+product_category = read.csv("category.csv", stringsAsFactors = F)
+category_date = read.csv("category_date.csv", stringsAsFactors = F)
+merge = read.csv("merge.csv", stringsAsFactors = F)
 
 category_date$purchase_date<-as.Date(category_date$purchase_date)
 date$purchase_date<-as.Date(date$purchase_date)
@@ -28,7 +18,7 @@ as.vector(t(merge %>% distinct(s_province))) -> CNprovince
 as.vector(t(merge %>% distinct(delivered_year) %>% arrange(delivered_year))) -> Years
 as.vector(t(merge %>% distinct(product_category))) -> category
 
-# Assigning variables
+#Variables:
 geo_choices = list(
         "Gross Merchandise Volume" = names(location)[[2]],
         "Order Value (Avg)" = names(location)[[3]],
@@ -74,14 +64,20 @@ set.seed(123)
 k.max <- 10
 wss <- c(235001.10, 120513.65,  71439.26,  60854.26,  41202.21,  32547.20,  27640.65,  22653.06,  20162.52,  16452.73)
 
-# k-means with k=7
+# k-means 
 clusters <- kmeans(cluster_df,5)
-# bring cluster data into df
 cluster_df$clusters <- as.factor(clusters$cluster)
 
-intro_str =  "Intro"
-
-intrdata_str = "Dataset Description"
+library(ggplot2)
+library(googleVis)
+library(tidyverse)
+library(DT)
+library(leaflet)
+library(maps)
+library(geojsonio)
+library(RColorBrewer)
+library(stats)
+library(shinyWidgets)
 
 ui <- fluidPage(theme = "style.css",
                 shinyUI(
@@ -94,8 +90,8 @@ ui <- fluidPage(theme = "style.css",
                                                 tabName = "intr",
                                                 icon = icon("align-justify")
                                         ),
-                                        menuItem("Geographic", tabName = "geo", icon = icon("map")),
-                                        menuItem("Sales Trend", tabName = "time", icon = icon("line-chart")),
+                                        menuItem("Geographic", tabName = "location", icon = icon("map")),
+                                        menuItem("Sales Trend", tabName = "date", icon = icon("line-chart")),
                                         menuItem(
                                                 "Tracks",
                                                 tabName = "cat",
@@ -104,7 +100,7 @@ ui <- fluidPage(theme = "style.css",
                                         menuItem("Conclusion", tabName = "Insights", icon = icon("globe-americas"))
                                 )),
                                 dashboardBody(
-                                        tags$style(type = "text/css", "#geo {height: calc(100vh - 80px) !important;}"),
+                                        tags$style(type = "text/css", "#location {height: calc(100vh - 80px) !important;}"),
                                         tabItems(
                                                 tabItem(tabName = "intr",
                                                         fluidRow(column(
@@ -186,7 +182,7 @@ ui <- fluidPage(theme = "style.css",
                                                         
       
                                                 ),
-                                                tabItem(tabName = "geo",
+                                                tabItem(tabName = "location",
                                                         fluidRow(
                                                                 column(
                                                                         width = 9,
@@ -194,7 +190,7 @@ ui <- fluidPage(theme = "style.css",
                                                                                 title = "Map",
                                                                                 solidHeader = F,
                                                                                 #status = "info",
-                                                                                leafletOutput("geo", height = 800),
+                                                                                leafletOutput("location", height = 800),
                                                                                 width = NULL,
                                                                                 height = "auto"
                                                                         )
@@ -251,7 +247,7 @@ ui <- fluidPage(theme = "style.css",
                                                                 )
                                                         )),
                                                 
-                                                tabItem(tabName = "time",
+                                                tabItem(tabName = "date",
                                                         fluidRow(
                                                                 column(
                                                                         width = 12,
@@ -463,9 +459,7 @@ ui <- fluidPage(theme = "style.css",
                                                                                "adding a new cluster to the total variation within each cluster will be smaller than before and at some point the marginal gain will drop, giving an acute angle in the graph"
                                                                                )
                                                                         )
-                                                                        # to go deeper in depth to Determine the optimal model, Bayesian Information Criterion for expectation-maximization is required
-                                                                        # Compute and plot wss for k = 2 to k = 15
-                                                                        #plotOutput(outputId = 'k_plot')))
+                                                                        
                                                                 ),
                                                                 column(
                                                                         width = 9,
@@ -503,282 +497,3 @@ ui <- fluidPage(theme = "style.css",
                         )
 ))
 )
-
-server <- function(input, output, session) {
-        bins = reactiveValues()
-        labtxt = reactiveValues()
-        
-        
-        # Reactive Data For scatter Plot
-        location_scat = reactive({
-                req(input$xcol, input$ycol)
-                
-                location %>%
-                        select(input$xcol, input$ycol)
-                
-        })
-        
-        # Reactive Data For Correlation computing
-        geo_corx = reactive({
-                req(input$xcol)
-                
-                location %>%
-                        select(input$xcol)
-        })
-        geo_cory = reactive({
-                req(input$ycol)
-                
-                location %>%
-                        select(input$ycol)
-        })
-        
-        # Reactive Data For geo Table
-        location_table = reactive({
-                req(input$geoin)
-                location %>%
-                        select(province, value = input$geoin) %>%
-                        arrange(desc(value))
-        })
-        
-        # Reactive Data For Line chart
-        category_date_line = reactive({
-                req(input$datein)
-                req(input$trdcats)
-                
-                category_date %>%
-                        select(purchase_date, input$trdcats) %>%
-                        filter(purchase_date >= input$datein[1] &
-                                       purchase_date <= input$datein[2])
-                
-        })
-        
-        # Reactive Data for Categories Trend table
-        cat_time_table = reactive({
-                req(input$datein)
-                req(input$catsfortable)
-                
-                
-                category_date %>%
-                        filter(purchase_date >= input$datein[1] &
-                                       purchase_date <= input$datein[2]) %>%
-                        select(Date = purchase_date, input$catsfortable)
-        })
-        
-        # Reactive Data For Bar Chart and Table
-        product_category_bar = reactive({
-                req(input$catvalue)
-                
-                product_category %>%
-                        select(category, value = input$catvalue) %>%
-                        filter(category %in% input$cats) %>%
-                        arrange(.,desc(value))
-        
-                
-        })
-        
-        # Switching labels for map
-        observe({
-                if (input$geoin == "sales") {
-                        labtxt$x = "<strong>%s</strong><br/><strong>Sales:</strong> $%g"
-                        bins$y = c(
-                                0,
-                                50000,
-                                100000,
-                                200000,
-                                300000,
-                                400000,
-                                1000000,
-                                2000000,
-                                5000000,
-                                Inf
-                        )
-                } else if (input$geoin == "avg_shcsratio") {
-                        labtxt$x = "<strong>%s</strong><br/><strong>Ratio:</strong> %g"
-                        bins$y = 9
-                } else if (input$geoin == "avg_review") {
-                        labtxt$x = "<strong>%s</strong><br/><strong>Score:</strong> %g"
-                        bins$y = 9
-                } else if (input$geoin %in% c("avg_delidays", "avg_diffestdel")) {
-                        labtxt$x = "<strong>%s</strong><br/>%g Days"
-                        bins$y = 9
-                } else {
-                        labtxt$x = "<strong>%s</strong><br/>$%g BRL"
-                        bins$y = 9
-                }
-                
-                c = input$trdcats
-                
-                if (is.null(c))
-                        c = character(0)
-                
-                updateSelectInput(
-                        session,
-                        "catsfortable",
-                        choices = c,
-                        selected = head(c, 1)
-                )
-                
-        })
-        
-        
-        #Graph for Map
-        output$geo = renderLeaflet({
-                pal = colorBin("Greens",
-                               location[, input$geoin],
-                               bins = bins$y,
-                               pretty = F)
-                
-                labels = sprintf(labtxt$x,
-                                 province$name,
-                                 location[, input$geoin]
-                ) %>% lapply(htmltools::HTML)
-                
-                geo = leaflet(province) %>%
-                        addTiles() %>%
-                        addPolygons(
-                                fillColor = ~ pal(location[, input$geoin]),
-                                weight = 2,
-                                opacity = 1,
-                                color = "white",
-                                dashArray = "3",
-                                fillOpacity = 0.7,
-                                highlight = highlightOptions(
-                                        weight = 5,
-                                        color = "#666",
-                                        dashArray = "",
-                                        fillOpacity = 0.7,
-                                        bringToFront = TRUE
-                                ),
-                                
-                                label = labels,
-                                labelOptions = labelOptions(
-                                        style = list(
-                                                "font-weight" = "normal",
-                                                padding = "3px 8px"
-                                        ),
-                                        textsize = "15px",
-                                        direction = "auto"
-                                )
-                        )
-                geo %>%
-                        addLegend(
-                                pal = pal,
-                                values = location[, input$geoin],
-                                opacity = 0.7,
-                                title = NULL,
-                                position = "bottomright"
-                        )
-        })
-        
-        #Geo scatter plot
-        output$geoscat = renderGvis({
-                gvisScatterChart(
-                        location_scat(),
-                        options = list(
-                                width = "300px",
-                                height = "300px",
-                                legend = "none"
-                        )
-                )
-        })
-        
-        # Printing correlation
-        output$cor = renderText({
-                paste("Correlation:", round(cor(geo_corx(), geo_cory())[[1]], 2), sep = " ")
-        })
-        
-        # Geo Data Output
-        output$table = renderTable({
-                head(location_table(), 6)
-        },
-        striped = T,
-        spacing = 'l',
-        width = '100%',
-        colnames = F,
-        digits = 2)
-        
-        
-        # Trend Line Chart
-        output$tim = renderGvis({
-                gvisLineChart(
-                        category_date_line(),
-                        options = list(
-                                width = "automatic",
-                                height = "500px",
-                                vAxis = "{title: 'Sales (in $US)', format: 'short'}",
-                                hAxis = "{title: 'Date'}",
-                                animation = "{startup: true}"
-                        )
-                )
-        })
-        
-        # Trend table
-        output$trdtable = DT::renderDataTable({
-                datatable(cat_time_table(), rownames = F)
-        })
-        
-        
-        # Categories Bar Chart
-        output$cat = renderGvis(gvisColumnChart(
-                product_category_bar(),
-                options = list(
-                        width = "automatic",
-                        height = "400px",
-                        bar = "{groupWidth: '60%'}",
-                        vAxis = "{title:'Sales (in $US)', format: 'short'}",
-                        hAxis = "{title:'Categories'}",
-                        animation = "{startup: true}",
-                        legend = "none"
-                )
-        ))
-        
-        # Categories Table
-        output$cattable = renderTable({
-                head(product_category_bar(), 10)
-        },
-        striped = T,
-        spacing = 'l',
-        width = '100%',
-        colnames = F)
-        
-        output$k_op <- renderPlot({
-                plot(1:k.max, wss,type="b", pch = 19, frame = FALSE, xlab="Number of clusters K", ylab="Total within-clusters sum of squares")
-        })
-        
-        
-        # graph of the cluster result
-        output$k_plot <- renderPlot({
-                ggplot(cluster_df, aes(x=c_lng, y=c_lat, color=clusters)) +
-                        geom_point(alpha=.5)+
-                        coord_cartesian(xlim = c(-70,-35), ylim = c(-35,10)) + 
-                        geom_density_2d() +
-                        theme_bw()
-        })
-        
-       
-        output$LT_plot <- renderPlot({
-                LT_df =  LT2 %>% 
-                        filter(delivered_year %in% input$locYear)%>% 
-                        #filter(delivered_week %in% input$locWeek) %>% 
-                        filter(s_province %in% input$locInput) %>% 
-                        group_by(delivered_year,delivered_week,LT) %>% 
-                        summarise(mean2 = mean(as.numeric(days))) %>%
-                        ungroup()
-                dD_df = merge %>% 
-                        na.omit %>% 
-                        filter(delivered_year %in% input$locYear) %>% 
-                        group_by(delivered_year,delivered_week)%>%
-                        summarise(m_POtoRDD = median(as.numeric(POtoRDD)), m_POtoDO = mean(as.numeric(POtoSO) + as.numeric(SOtoDO)))
-                ggplot() +
-                        geom_col(data=LT_df,aes(x=delivered_week,y=as.numeric(mean2),fill=LT))+
-                        geom_line(data=dD_df,aes(x=delivered_week,y=as.numeric(m_POtoRDD)),linetype = "dashed",size = 1, label = 'POtoRDD')+
-                        theme_bw() +
-                        labs(title='Order Purchase to Delivery', x = 'Week Number', y = 'Number of Days (average)', color = 'Year')+ 
-                        theme(legend.key=element_blank(), plot.title = element_text(size=15, face='bold',hjust = 0.5)) +
-                        coord_cartesian(xlim = c(3,51))
-        }, height = 500)
-        
-        
-}
-
-shinyApp(ui = ui, server = server)
