@@ -135,7 +135,7 @@ ui <- fluidPage(theme = "style.css",
                                                                                 solidHeader = F,
                                                                                 width = NULL,
                                                                                 #status = "info",
-                                                                                selectizeInput("geoin", label = NULL, geo_choices)
+                                                                                selectizeInput("geoin", label = NULL, select1)
                                                                         ),
                                                                         box(
                                                                                 id = "scatter",
@@ -149,14 +149,14 @@ ui <- fluidPage(theme = "style.css",
                                                                                         selectInput(
                                                                                                 inputId = 'xcol',
                                                                                                 label = 'X Variable',
-                                                                                                choices = xcol_choices,
-                                                                                                selected = xcol_choices[[1]]
+                                                                                                choices = select2,
+                                                                                                selected = select3[[1]]
                                                                                         ),
                                                                                         selectInput(
                                                                                                 inputId = 'ycol',
                                                                                                 label = 'Y Variable',
-                                                                                                choices = ycol_choices,
-                                                                                                selected = ycol_choices[[1]]
+                                                                                                choices = select3,
+                                                                                                selected = select3[[1]]
                                                                                         ),
                                                                                         circle = TRUE,
                                                                                         #status = "info",
@@ -219,8 +219,8 @@ ui <- fluidPage(theme = "style.css",
                                                                                 #status = "info",
                                                                                 pickerInput(
                                                                                         inputId = "trdcats",
-                                                                                        choices = trd_choices,
-                                                                                        selected = trd_choices[12],
+                                                                                        choices = select4,
+                                                                                        selected = select4[12],
                                                                                         options = list(`actions-box` = TRUE),
                                                                                         multiple = TRUE
                                                                                 )
@@ -233,7 +233,7 @@ ui <- fluidPage(theme = "style.css",
                                                                                 solidHeader = F,
                                                                                 width = NULL,
                                                                                 #status = "info",
-                                                                                selectInput("catsfortable", label = NULL, trd_choices)
+                                                                                selectInput("catsfortable", label = NULL, select4)
                                                                         )
                                                                 ),
                                                                 column(
@@ -284,7 +284,7 @@ ui <- fluidPage(theme = "style.css",
                                                                                 selectInput(
                                                                                         "catvalue",
                                                                                         label = NULL,
-                                                                                        choices = catvalue_choices,
+                                                                                        choices = select5,
                                                                                         selected = "total_sales"
                                                                                 )
                                                                         )
@@ -299,8 +299,8 @@ ui <- fluidPage(theme = "style.css",
                                                                                 pickerInput(
                                                                                         inputId = "cats",
                                                                                         label = NULL,
-                                                                                        choices = cats_choices,
-                                                                                        selected = cats_choices,
+                                                                                        choices = select6,
+                                                                                        selected = select6,
                                                                                         options = list(`actions-box` = TRUE),
                                                                                         multiple = TRUE
                                                                                 )
