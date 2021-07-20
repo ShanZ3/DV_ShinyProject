@@ -1,71 +1,69 @@
 library(shiny)
 library(shinydashboard)
+library(rsconnect)
+library(ggplot2)
+library(googleVis)
 library(tidyverse)
 library(DT)
 library(leaflet)
-library(googleVis)
 library(maps)
 library(geojsonio)
 library(RColorBrewer)
 library(stats)
 library(shinyWidgets)
-library(ggplot2)
 
 # loading dfs
-geo_df = read.csv("data/location.csv", stringsAsFactors = F)
+location = read.csv("data/location.csv", stringsAsFactors = F)
 province = geojsonio::geojson_read("data/china.json",what='sp')
-time_df = read.csv("data/date.csv", stringsAsFactors = F)
-cat_df = read.csv("data/category.csv", stringsAsFactors = F)
-cat_time_df = read.csv("data/category_date.csv", stringsAsFactors = F)
-po_master= read.csv("data/merge.csv", stringsAsFactors = F)
+date = read.csv("data/date.csv", stringsAsFactors = F)
+product_category = read.csv("data/category.csv", stringsAsFactors = F)
+category_date = read.csv("data/category_date.csv", stringsAsFactors = F)
+merge = read.csv("data/merge.csv", stringsAsFactors = F)
 
-cat_time_df$purchase_date<-as.Date(cat_time_df$purchase_date)
-time_df$purchase_date<-as.Date(time_df$purchase_date)
+category_date$purchase_date<-as.Date(category_date$purchase_date)
+date$purchase_date<-as.Date(date$purchase_date)
 
 #China Province
-as.vector(t(po_master %>% distinct(s_province))) -> CNprovince
-as.vector(t(po_master %>% distinct(delivered_year) %>% arrange(delivered_year))) -> Years
-as.vector(t(po_master %>% distinct(product_category))) -> category
+as.vector(t(merge %>% distinct(s_province))) -> CNprovince
+as.vector(t(merge %>% distinct(delivered_year) %>% arrange(delivered_year))) -> Years
+as.vector(t(merge %>% distinct(product_category))) -> category
 
 # Assigning variables
 geo_choices = list(
-        "Total Sales" = names(geo_df)[[2]],
-        "Average Order Value" = names(geo_df)[[3]],
-        "Average Shipping Cost" = names(geo_df)[[4]],
-        "Shipping Cost/Order Ratio" = names(geo_df)[[5]],
-        "Average Delivery Days" = names(geo_df)[[6]],
-        "Average Review Score" = names(geo_df)[[7]],
-        "Est - Actual Deliver Time" = names(geo_df)[[8]]
+        "Gross Merchandise Volume" = names(location)[[2]],
+        "Order Value (Avg)" = names(location)[[3]],
+        "Shipping Cost (Avg)" = names(location)[[4]],
+        "Delivery Days (Avg)" = names(location)[[6]],
+        "Review Score (Avg)" = names(location)[[7]]
 )
 
 xcol_choices = list(
-        "Average Order Value" = names(geo_df)[[3]],
-        "Average Shipping Cost" = names(geo_df)[[4]],
-        "Shipping Cost/Order Ratio" = names(geo_df)[[5]],
-        "Average Delivery Days" = names(geo_df)[[6]]
+        "Order Value (Avg)" = names(location)[[3]],
+        "Shipping Cost (Avg)" = names(location)[[4]],
+        "Delivery Days (Avg)" = names(location)[[6]]
 )
 
 ycol_choices = list(
-        "Average Review Score" = names(geo_df)[[7]],
-        "Est - Actual Deliver Time" = names(geo_df)[[8]]
+        "Review Score (Avg)" = names(location)[[7]],
+        "Actual Delivery Time" = names(location)[[8]]
 )
 
-trd_choices = sort(colnames(cat_time_df)[2:13])
+trd_choices = sort(colnames(category_date)[2:13])
 
 catvalue_choices = list(
-        "Total Sales" = names(cat_df)[[2]],
-        "Unit Sales" = names(cat_df)[[3]],
-        "Average Review Score" = names(cat_df)[[4]]
+        "Gross Merchandise Value" = names(product_category)[[2]],
+        "Sales per order" = names(product_category)[[3]],
+        "Review Score (Avg)" = names(product_category)[[4]]
 )
 
-cats_choices = sort(cat_df$category)
+cats_choices = sort(product_category$category)
 
-po_master %>% 
+merge %>% 
         select('delivered_week','delivered_year','POtoSO','SOtoGI','GItoGR','s_province') %>% 
         gather('POtoSO','SOtoGI','GItoGR',key='LT',value=days )%>% 
         na.omit()  -> LT2
 
-po_master %>% 
+merge %>% 
         select(c_lat,c_lng) %>% 
         na.omit() ->cluster_df
 
@@ -74,7 +72,7 @@ data <- test1
 set.seed(123)
 
 k.max <- 10
-wss <- c(229002.00, 122816.76,  81439.26,  60885.26,  44202.21,  35547.20,  27490.15,  23758.06,  21126.72,  17679.27)
+wss <- c(235001.10, 120513.65,  71439.26,  60854.26,  41202.21,  32547.20,  27640.65,  22653.06,  20162.52,  16452.73)
 
 # k-means with k=7
 clusters <- kmeans(cluster_df,5)
@@ -124,7 +122,7 @@ ui <- fluidPage(theme = "style.css",
                                                                                 The supply chain network as a whole is an extremely long and complex process, and saving 3-5% of transportation or inventory costs is a big deal for many companies, especially for Kwai Inc. 
                                                                                 It can be seen from the reduction of physical stores that e-commerce is an inevitable choice for retail enterprises. One of the biggest differences between Amazon and other online retailers is the speed of delivery. 
                                                                                 This visual dashboard provides insights into the health and performance of real-time business services, with different priorities and responsibilities for different purposes from different perspectives."),
-                                                                        tags$div(HTML("<em>Background knowledge from KDD Cup 2020 Challenges for Modern E-Commerce Platform </em>")),
+                                                                        tags$h5(tags$i("Background knowledge from KDD Cup 2020 Challenges for Modern E-Commerce Platform ")),
                                                                         tags$h5(tags$strong("Research Questions")),
                                                                         tags$h5("Which candidate products are most popular among customers?"),
                                                                         tags$h5("Which is the most important factor to measure customer satisfaction?"),
@@ -276,10 +274,10 @@ ui <- fluidPage(theme = "style.css",
                                                                                 dateRangeInput(
                                                                                         "datein",
                                                                                         label = NULL,
-                                                                                        start = head(time_df$purchase_date, 1),
-                                                                                        end = tail(time_df$purchase_date, 1),
-                                                                                        min = head(time_df$purchase_date, 1),
-                                                                                        max = tail(time_df$purchase_date, 1)
+                                                                                        start = head(date$purchase_date, 1),
+                                                                                        end = tail(date$purchase_date, 1),
+                                                                                        min = head(date$purchase_date, 1),
+                                                                                        max = tail(date$purchase_date, 1)
                                                                                 )
                                                                         )
                                                                 ),
@@ -512,10 +510,10 @@ server <- function(input, output, session) {
         
         
         # Reactive Data For scatter Plot
-        geo_df_scat = reactive({
+        location_scat = reactive({
                 req(input$xcol, input$ycol)
                 
-                geo_df %>%
+                location %>%
                         select(input$xcol, input$ycol)
                 
         })
@@ -524,30 +522,30 @@ server <- function(input, output, session) {
         geo_corx = reactive({
                 req(input$xcol)
                 
-                geo_df %>%
+                location %>%
                         select(input$xcol)
         })
         geo_cory = reactive({
                 req(input$ycol)
                 
-                geo_df %>%
+                location %>%
                         select(input$ycol)
         })
         
         # Reactive Data For geo Table
-        geo_df_table = reactive({
+        location_table = reactive({
                 req(input$geoin)
-                geo_df %>%
+                location %>%
                         select(province, value = input$geoin) %>%
                         arrange(desc(value))
         })
         
         # Reactive Data For Line chart
-        cat_time_df_line = reactive({
+        category_date_line = reactive({
                 req(input$datein)
                 req(input$trdcats)
                 
-                cat_time_df %>%
+                category_date %>%
                         select(purchase_date, input$trdcats) %>%
                         filter(purchase_date >= input$datein[1] &
                                        purchase_date <= input$datein[2])
@@ -560,17 +558,17 @@ server <- function(input, output, session) {
                 req(input$catsfortable)
                 
                 
-                cat_time_df %>%
+                category_date %>%
                         filter(purchase_date >= input$datein[1] &
                                        purchase_date <= input$datein[2]) %>%
                         select(Date = purchase_date, input$catsfortable)
         })
         
         # Reactive Data For Bar Chart and Table
-        cat_df_bar = reactive({
+        product_category_bar = reactive({
                 req(input$catvalue)
                 
-                cat_df %>%
+                product_category %>%
                         select(category, value = input$catvalue) %>%
                         filter(category %in% input$cats) %>%
                         arrange(.,desc(value))
@@ -626,19 +624,19 @@ server <- function(input, output, session) {
         #Graph for Map
         output$geo = renderLeaflet({
                 pal = colorBin("Greens",
-                               geo_df[, input$geoin],
+                               location[, input$geoin],
                                bins = bins$y,
                                pretty = F)
                 
                 labels = sprintf(labtxt$x,
                                  province$name,
-                                 geo_df[, input$geoin]
+                                 location[, input$geoin]
                 ) %>% lapply(htmltools::HTML)
                 
                 geo = leaflet(province) %>%
                         addTiles() %>%
                         addPolygons(
-                                fillColor = ~ pal(geo_df[, input$geoin]),
+                                fillColor = ~ pal(location[, input$geoin]),
                                 weight = 2,
                                 opacity = 1,
                                 color = "white",
@@ -665,7 +663,7 @@ server <- function(input, output, session) {
                 geo %>%
                         addLegend(
                                 pal = pal,
-                                values = geo_df[, input$geoin],
+                                values = location[, input$geoin],
                                 opacity = 0.7,
                                 title = NULL,
                                 position = "bottomright"
@@ -675,7 +673,7 @@ server <- function(input, output, session) {
         #Geo scatter plot
         output$geoscat = renderGvis({
                 gvisScatterChart(
-                        geo_df_scat(),
+                        location_scat(),
                         options = list(
                                 width = "300px",
                                 height = "300px",
@@ -691,7 +689,7 @@ server <- function(input, output, session) {
         
         # Geo Data Output
         output$table = renderTable({
-                head(geo_df_table(), 6)
+                head(location_table(), 6)
         },
         striped = T,
         spacing = 'l',
@@ -703,7 +701,7 @@ server <- function(input, output, session) {
         # Trend Line Chart
         output$tim = renderGvis({
                 gvisLineChart(
-                        cat_time_df_line(),
+                        category_date_line(),
                         options = list(
                                 width = "automatic",
                                 height = "500px",
@@ -722,7 +720,7 @@ server <- function(input, output, session) {
         
         # Categories Bar Chart
         output$cat = renderGvis(gvisColumnChart(
-                cat_df_bar(),
+                product_category_bar(),
                 options = list(
                         width = "automatic",
                         height = "400px",
@@ -736,7 +734,7 @@ server <- function(input, output, session) {
         
         # Categories Table
         output$cattable = renderTable({
-                head(cat_df_bar(), 10)
+                head(product_category_bar(), 10)
         },
         striped = T,
         spacing = 'l',
@@ -766,7 +764,7 @@ server <- function(input, output, session) {
                         group_by(delivered_year,delivered_week,LT) %>% 
                         summarise(mean2 = mean(as.numeric(days))) %>%
                         ungroup()
-                dD_df = po_master %>% 
+                dD_df = merge %>% 
                         na.omit %>% 
                         filter(delivered_year %in% input$locYear) %>% 
                         group_by(delivered_year,delivered_week)%>%
