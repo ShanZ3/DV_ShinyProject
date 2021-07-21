@@ -74,17 +74,13 @@ ui <- fluidPage(theme = "style.css",
                                                                         tags$h5("The dataset comes from the real-scenario multimodal data of Kwai's E-commerce."),
                                                                         tags$h5(tags$strong("Order Dataset:")),
                                                                         tags$h5("1) order_id 2) user_id 3) order_status 4) order_submit_timestamp 5) order_to_carrier_date 6) order_to_customer_date 7) estimated_delivery_date"),
-                                                                        tags$h5(tags$strong("Item Dataset:")),
-                                                                        tags$h5("1) order_id 2) item_id 3) product_id 4) seller_id 5) shipping_limit_date 6) price 7) freight_value"),
                                                                         tags$h5(tags$strong("Reviews Dataset:")),
-                                                                        tags$h5("1)review_id 2) order_id 3) review_score"),
+                                                                        tags$h5("1) review_id 2) order_id 3) review_score"),
                                                                         tags$h5(tags$strong("Customers Dataset:")),
                                                                         tags$h5("1) customer_id 2) customer_zip_code 3) customer_city 5) customer_province"),
-                                                                        tags$h5(tags$strong("Payments Dataset:")),
-                                                                        tags$h5("1) seller_id 2) seller_zip_code_prefix 3) seller_city 4) seller_province"),
                                                                         tags$h5(tags$strong("Sellers Dataset:")),
-                                                                        tags$h5("1) product_id 2) product_category_name 3) product_name 6) product_weight 7) product_length 8) product_height_cm 9) product_width_cm"),
-                                                                        tags$h5(tags$strong("Geolocation Dataset:")),
+                                                                        tags$h5("1) product_id 2) product_category_name 3) product_name"),
+                                                                        tags$h5(tags$strong("Geography Dataset:")),
                                                                         tags$h5("1) geolocation_zip_code_2) geolocation_lat 3) geolocation_long 4) geolocation_city 5) geolocation_province"),
                                                                         
                                                                         tags$h5("Source: Kwai App")
@@ -394,20 +390,9 @@ ui <- fluidPage(theme = "style.css",
                                                                         )
                                                                         
                                                                 ),
-                                                                column(
-                                                                        width = 9,
-                                                                        box(
-                                                                                title = "Clusters",
-                                                                                solidHeader = F,
-                                                                                #collapsible = T,
-                                                                                width = NULL,
-                                                                                #status = "info",
-                                                                                img(src = "location_cluster.png")
-                                                                                
-                                                                        
-                                                                )),
+                                                                
                                                                 column( 
-                                                                  width=3,
+                                                                  width=12,
                                                                   box(
                                                                     title='Best Locations',
                                                                     width = NULL,
